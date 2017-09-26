@@ -1,6 +1,9 @@
 use std::ops;
 
-pub struct Expression {}
+pub enum Expression {
+    Sum(Money, Money),
+}
+
 pub struct Bank {}
 
 impl Bank {
@@ -9,7 +12,10 @@ impl Bank {
     }
 
     fn reduce(&self, expr: Expression, to: Currency) -> Money {
-        Money::dollar(10)
+        match expr {
+            Expression::Sum(augend, addend) =>
+                Money::new(augend.amount + addend.amount, to),
+        }
     }
 }
 
@@ -26,6 +32,13 @@ pub enum Currency {
 }
 
 impl Money {
+    fn new(amount: i32, currency: Currency) -> Money {
+        Money {
+            amount,
+            currency,
+        }
+    }
+
     pub fn dollar(amount: i32) -> Money {
         Money {
             amount,
@@ -60,7 +73,7 @@ impl ops::Add for Money {
     type Output = Expression;
 
     fn add(self, other: Money) -> Self::Output {
-        Expression {  }
+        Expression::Sum(self, other)
     }
 }
 
@@ -117,5 +130,13 @@ mod tests {
 
         let reduced = bank.reduce(sum, Currency::Dollar);
         assert_eq!(reduced, Money::dollar(10));
+    }
+
+    #[test]
+    fn test_reduce_sum() {
+        let bank = Bank::new();
+        let sum = Money::dollar(3) + Money::dollar(4);
+        let result = bank.reduce(sum, Currency::Dollar);
+        assert_eq!(result, Money::dollar(7));
     }
 }
