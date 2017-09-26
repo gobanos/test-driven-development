@@ -1,0 +1,8 @@
+[package]
+name = "the-money-example"
+version = "0.1.0"
+authors = ["Grégory OBANOS <gregory.obanos@gmail.com>"]
+
+[dependencies]
+
+[lib]
