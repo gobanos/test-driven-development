@@ -41,7 +41,8 @@ impl ops::Mul<i32> for Money {
 
 impl PartialEq for Money {
     fn eq(&self, other: &Money) -> bool {
-        self.amount == other.amount
+        self.amount == other.amount &&
+            self.currency == other.currency
     }
 }
 
@@ -64,6 +65,8 @@ mod tests {
 
         assert!(Money::franc(5) == Money::franc(5));
         assert!(Money::franc(5) != Money::franc(6));
+
+        assert!(Money::franc(5) != Money::dollar(5));
     }
 
     #[test]
