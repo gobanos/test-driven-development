@@ -26,6 +26,10 @@ impl Money {
             currency: Currency::Franc,
         }
     }
+
+    pub fn currency(&self) -> Currency {
+        self.currency
+    }
 }
 
 impl ops::Mul<i32> for Money {
@@ -43,6 +47,15 @@ impl PartialEq for Money {
     fn eq(&self, other: &Money) -> bool {
         self.amount == other.amount &&
             self.currency == other.currency
+    }
+}
+
+impl ToString for Currency {
+    fn to_string(&self) -> String {
+        match *self {
+            Currency::Dollar => "USD",
+            Currency::Franc => "CHF",
+        }.into()
     }
 }
 
@@ -75,5 +88,15 @@ mod tests {
 
         assert_eq!(five * 2, Money::franc(10));
         assert_eq!(five * 3, Money::franc(15));
+    }
+
+    #[test]
+    fn test_currency() {
+        check_currency(Money::dollar(1).currency(), "USD");
+        check_currency(Money::franc(1).currency(), "CHF");
+    }
+
+    fn check_currency(currency: Currency, str_value: &str) {
+        assert_eq!(currency.to_string(), str_value.to_string());
     }
 }
