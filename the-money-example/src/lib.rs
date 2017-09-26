@@ -1,5 +1,18 @@
 use std::ops;
 
+pub struct Expression {}
+pub struct Bank {}
+
+impl Bank {
+    fn new() -> Bank {
+        Bank {  }
+    }
+
+    fn reduce(&self, expr: Expression, to: Currency) -> Money {
+        Money::dollar(10)
+    }
+}
+
 #[derive(Copy, Clone, Debug)]
 pub struct Money {
     amount: i32,
@@ -40,6 +53,14 @@ impl ops::Mul<i32> for Money {
             amount: self.amount * multiplier,
             ..self
         }
+    }
+}
+
+impl ops::Add for Money {
+    type Output = Expression;
+
+    fn add(self, other: Money) -> Self::Output {
+        Expression {  }
     }
 }
 
@@ -87,5 +108,14 @@ mod tests {
 
     fn check_currency(currency: Currency, str_value: &str) {
         assert_eq!(currency.to_string(), str_value.to_string());
+    }
+
+    #[test]
+    fn test_simple_addition() {
+        let bank = Bank::new();
+        let sum = Money::dollar(5) + Money::dollar(5);
+
+        let reduced = bank.reduce(sum, Currency::Dollar);
+        assert_eq!(reduced, Money::dollar(10));
     }
 }
