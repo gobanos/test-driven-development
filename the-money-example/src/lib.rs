@@ -76,18 +76,7 @@ mod tests {
         assert!(Money::dollar(5) == Money::dollar(5));
         assert!(Money::dollar(5) != Money::dollar(6));
 
-        assert!(Money::franc(5) == Money::franc(5));
-        assert!(Money::franc(5) != Money::franc(6));
-
         assert!(Money::franc(5) != Money::dollar(5));
-    }
-
-    #[test]
-    fn test_franc_multiplication() {
-        let five = Money::franc(5);
-
-        assert_eq!(five * 2, Money::franc(10));
-        assert_eq!(five * 3, Money::franc(15));
     }
 
     #[test]
