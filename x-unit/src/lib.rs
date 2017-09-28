@@ -15,6 +15,7 @@ impl <F: Fn() -> ()> TestCase<F> {
 pub struct WasRun<F: Fn() -> ()> {
     test_case: TestCase<F>,
     pub was_run: bool,
+    pub was_setup: bool,
 }
 
 impl<F: Fn() -> ()> WasRun<F> {
@@ -22,11 +23,18 @@ impl<F: Fn() -> ()> WasRun<F> {
         WasRun {
             test_case: TestCase::new(test_method),
             was_run: false,
+            was_setup: false,
         }
     }
 
     pub fn run(&mut self) {
+        self.setup();
         self.test_case.run();
         self.was_run = true;
+    }
+
+    fn setup(&mut self) {
+        self.was_setup = true;
+        self.was_run = false;
     }
 }
