@@ -1,20 +1,52 @@
 use std::ops;
+use std::hash;
+use std::collections::HashMap;
 
-pub enum Expression {
-    Sum(Money, Money),
+pub trait Expression {
+    fn reduce(&self, bank: &Bank, to: Currency) -> Money;
 }
 
-pub struct Bank {}
+#[derive(Copy, Clone, Debug)]
+struct Sum {
+    augend: Money,
+    addend: Money,
+}
+
+impl Expression for Sum {
+    fn reduce(&self, bank: &Bank, to: Currency) -> Money {
+        let a = self.augend.reduce(bank, to);
+        let b = self.addend.reduce(bank, to);
+
+        Money {
+            amount: a.amount + b.amount,
+            currency: to,
+        }
+    }
+}
+
+pub struct Bank {
+    rates: HashMap<Pair, i32>,
+}
 
 impl Bank {
     fn new() -> Bank {
-        Bank {  }
+        Bank { rates: HashMap::new() }
     }
 
-    fn reduce(&self, expr: Expression, to: Currency) -> Money {
-        match expr {
-            Expression::Sum(augend, addend) =>
-                Money::new(augend.amount + addend.amount, to),
+    fn reduce(&self, expr: Box<Expression>, to: Currency) -> Money {
+        expr.reduce(self, to)
+    }
+
+    fn add_rate(&mut self, from: Currency, to: Currency, rate: i32) {
+        let pair = Pair { from, to };
+        self.rates.insert(pair, rate);
+    }
+
+    fn rate(&self, from: Currency, to: Currency) -> i32 {
+        if from == to {
+            1
+        } else {
+            *self.rates.get(&Pair { from, to }).unwrap()
         }
     }
 }
@@ -25,7 +57,7 @@ pub struct Money {
     currency: Currency,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Currency {
     Dollar,
     Franc,
@@ -58,6 +90,16 @@ impl Money {
     }
 }
 
+impl Expression for Money {
+    fn reduce(&self, bank: &Bank, to: Currency) -> Money {
+        let rate = bank.rate(self.currency, to);
+        Money {
+            amount: self.amount / rate,
+            currency: to,
+        }
+    }
+}
+
 impl ops::Mul<i32> for Money {
     type Output = Money;
 
@@ -70,10 +112,15 @@ impl ops::Mul<i32> for Money {
 }
 
 impl ops::Add for Money {
-    type Output = Expression;
+    type Output = Box<Expression>;
 
     fn add(self, other: Money) -> Self::Output {
-        Expression::Sum(self, other)
+        Box::new(
+            Sum {
+                augend: self,
+                addend: other,
+            }
+        )
     }
 }
 
@@ -93,6 +140,24 @@ impl ToString for Currency {
     }
 }
 
+#[derive(Copy, Clone, Debug, Eq)]
+struct Pair {
+    from: Currency,
+    to: Currency,
+}
+
+impl PartialEq for Pair {
+    fn eq(&self, other: &Pair) -> bool {
+        self.from == other.from && self.to == other.to
+    }
+}
+
+impl hash::Hash for Pair {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -107,10 +172,10 @@ mod tests {
 
     #[test]
     fn test_equality() {
-        assert!(Money::dollar(5) == Money::dollar(5));
-        assert!(Money::dollar(5) != Money::dollar(6));
+        assert_eq!(Money::dollar(5), Money::dollar(5));
+        assert_ne!(Money::dollar(5), Money::dollar(6));
 
-        assert!(Money::franc(5) != Money::dollar(5));
+        assert_ne!(Money::franc(5), Money::dollar(5));
     }
 
     #[test]
@@ -138,5 +203,19 @@ mod tests {
         let sum = Money::dollar(3) + Money::dollar(4);
         let result = bank.reduce(sum, Currency::Dollar);
         assert_eq!(result, Money::dollar(7));
+    }
+
+    #[test]
+    fn test_reduce_money_different_currency() {
+        let mut bank = Bank::new();
+        bank.add_rate(Currency::Franc, Currency::Dollar, 2);
+
+        let result = bank.reduce(Box::new(Money::franc(2)), Currency::Dollar);
+        assert_eq!(result, Money::dollar(1));
+    }
+
+    #[test]
+    fn test_identity_rate() {
+        assert_eq!(Bank::new().rate(Currency::Dollar, Currency::Dollar), 1);
     }
 }
