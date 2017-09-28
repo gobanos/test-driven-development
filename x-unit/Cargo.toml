@@ -1,0 +1,8 @@
+[package]
+name = "xunit"
+version = "0.1.0"
+authors = ["Gregory Obanos <gregory.obanos@gmail.com>"]
+
+[dependencies]
+
+[lib]
