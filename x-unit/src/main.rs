@@ -3,16 +3,16 @@ extern crate xunit;
 use xunit::*;
 
 fn main() {
-    let test = TestCase::new(|| {
-        let mut test = WasRun::new(dummy);
-        assert!(!test.was_setup);
-        assert!(!test.was_run);
-        test.run();
-        assert!(test.was_setup);
-        assert!(test.was_run);
-    });
-
-    test.run();
+    TestCase::new(test_case_test).run();
 }
 
-fn dummy() {  }
+fn was_run(test_data: &mut TestData) {
+    test_data.insert("was_run".into(), true.into());
+}
+
+fn test_case_test(_: &mut TestData) {
+    let mut test = TestCase::new(was_run);
+    assert_eq!(test.get("was_run"), None);
+    test.run();
+    assert_eq!(test.get("was_run"), Some(&true.into()));
+}

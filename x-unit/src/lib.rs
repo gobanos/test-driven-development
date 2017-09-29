@@ -1,40 +1,33 @@
-pub struct TestCase<F: Fn() -> ()> {
+use std::collections::HashMap;
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum TestValue {
+    Bool(bool),
+}
+
+impl From<bool> for TestValue {
+    fn from(b: bool) -> Self {
+        TestValue::Bool(b)
+    }
+}
+
+pub type TestData = HashMap<String, TestValue>;
+
+pub struct TestCase<F: Fn(&mut TestData) -> ()> {
+    test_data: TestData,
     test_method: F,
 }
 
-impl <F: Fn() -> ()> TestCase<F> {
+impl<F: Fn(&mut TestData) -> ()> TestCase<F> {
     pub fn new(test_method: F) -> Self {
-        TestCase { test_method }
-    }
-
-    pub fn run(&self) {
-        (self.test_method)();
-    }
-}
-
-pub struct WasRun<F: Fn() -> ()> {
-    test_case: TestCase<F>,
-    pub was_run: bool,
-    pub was_setup: bool,
-}
-
-impl<F: Fn() -> ()> WasRun<F> {
-    pub fn new(test_method: F) -> Self {
-        WasRun {
-            test_case: TestCase::new(test_method),
-            was_run: false,
-            was_setup: false,
-        }
+        TestCase { test_data: TestData::new(), test_method }
     }
 
     pub fn run(&mut self) {
-        self.setup();
-        self.test_case.run();
-        self.was_run = true;
+        (self.test_method)(&mut self.test_data);
     }
 
-    fn setup(&mut self) {
-        self.was_setup = true;
-        self.was_run = false;
+    pub fn get(&self, key: &str) -> Option<&TestValue> {
+        self.test_data.get(key)
     }
 }
