@@ -6,10 +6,13 @@ class TestCase:
         pass
 
     def run(self):
+        result = TestResult()
+        result.testStarted()
         self.setUp()
         method = getattr(self, self.name)
         method()
         self.tearDown()
+        return result
 
     def tearDown(self):
         pass
@@ -23,12 +26,26 @@ class WasRun(TestCase):
         self.wasRun = None
         self.log = "setUp "
 
+    def tearDown(self):
+        self.log = self.log + "tearDown "
+
     def testMethod(self):
         self.wasRun = 1
         self.log = self.log + "testMethod "
 
-    def tearDown(self):
-        self.log = self.log + "tearDown "
+    def testBrokenMethod(self):
+        raise Exception
+
+
+class TestResult:
+    def __init__(self):
+        self.runCount = 0
+
+    def testStarted(self):
+        self.runCount = self.runCount + 1
+
+    def summary(self):
+        return "%d run, 0 failed" % self.runCount
 
 
 class TestCaseTest(TestCase):
@@ -37,5 +54,17 @@ class TestCaseTest(TestCase):
         test.run()
         assert(test.log == "setUp testMethod tearDown ")
 
+    def testResult(self):
+        test = WasRun("testMethod")
+        result = test.run()
+        assert(result.summary() == "1 run, 0 failed")
+
+    def testFailedResult(self):
+        test = WasRun("testBrokenMethod")
+        result = test.run()
+        assert(result.summary() == "1 run, 1 failed")
+
 
 TestCaseTest("testTemplateMethod").run()
+TestCaseTest("testResult").run()
+TestCaseTest("testFailedResult").run()
